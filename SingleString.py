@@ -5,11 +5,13 @@ import pandas as pd
 
 df1 = pd.read_csv(r'Cleaned_Data\UCIdrug_train.csv')
 df2 = pd.read_csv(r'Cleaned_Data\UCIdrug_test.csv')
-
+all_words = get_all_words()
 
 df = pd.concat([df1, df2], ignore_index=True)
 
 #print(df["usefulCount"])
+
+
 
 nums = set(df["usefulCount"])
 
@@ -32,12 +34,30 @@ for key, val in nums.items():
 
 text_for_classes = nums
 
-print(nums)
+vocab = set(get_all_words())
+
+# Create the DataFrame with the specified columns and index
+numerator_frame = pd.DataFrame(columns=list(vocab), index=nums.keys())
+
+# Fill all values with 1
+numerator_frame = numerator_frame.fillna(1)
 
 
 
-"""print(df1.iloc[0]["usefulCount"])
-print(df1.iloc[0]["review"])"""
+zed = 0
+for key in text_for_classes.keys():
+    zed += 1
+    for word in vocab:
+        numerator_frame.loc[key, word] = text_for_classes[key].count(word)
+    if zed >= 2:
+        break
+
+print(numerator_frame)
+
+
+
+
+
 
 
 
