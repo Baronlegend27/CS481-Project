@@ -48,5 +48,4 @@ df['review'] = df['review'].apply(replace_space)
 
 
 # Display the first few rows of the data
-
 df.to_csv(r'Cleaned_Data\UCIdrug_train.csv', index=False)

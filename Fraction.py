@@ -7,10 +7,13 @@ from Vector import get_all_words
 with open('fraction.pkl', 'rb') as file:
     loaded_data = pickle.load(file)
 
-numerator_frame, denominator_frame, vocab, nums = loaded_data
+numerator_frame, denominator_frame = loaded_data
 
 
 result = numerator_frame/denominator_frame
 
-print(result.head())
+with open('result.pkl', 'wb') as file:
+    pickle.dump(result, file)
+
+
 
