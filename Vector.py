@@ -67,6 +67,8 @@ def get_all_words():
         data = pickle.load(file)
     return data.split()
 
+def filter_non_alpha_words(words):
+    return [word for word in words if not word.isalpha()]
 
 if "__main__" == __name__:
     clear_and_write_pickle('all_text.pkl', all_text)
@@ -74,7 +76,12 @@ if "__main__" == __name__:
     all_text = all_text.lower()
     words = all_text.split()
 
+
     vocab = list(set(words))
+    non_alpha_vocab = filter_non_alpha_words(vocab)
+    print(non_alpha_vocab)
+    print(f'non_alpha vocab {len(non_alpha_vocab)}')
+    print(f'total vocab {len(vocab)}')
 
     vector = dict.fromkeys(vocab, 0)
 

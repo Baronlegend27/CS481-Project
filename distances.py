@@ -1,5 +1,10 @@
 import numpy as np
 from collections import Counter
+import pickle
+
+with open('vector_labels.pkl', 'rb') as file:
+    train, test = pickle.load(file)
+
 
 
 def cosine_similarity(dict1, dict2):
@@ -60,15 +65,8 @@ def euclidean_distance(dict1, dict2):
 
     return distance
 
+data = train
 
-# Example usage
-dict1 = {'a': 3, 'b': 2, 'c': 5}
-dict2 = {'a': 4, 'b': 2, 'c': 3}
+first = test[0]
+print(first)
 
-# Calculate Cosine Similarity
-cos_sim = cosine_similarity(dict1, dict2)
-print(f"Cosine Similarity: {cos_sim}")
-
-# Calculate Euclidean Distance
-euc_dist = euclidean_distance(dict1, dict2)
-print(f"Euclidean Distance: {euc_dist}")
