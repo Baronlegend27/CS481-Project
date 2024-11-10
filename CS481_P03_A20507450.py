@@ -7,7 +7,7 @@ remove_dates = lambda text: re.sub(r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b|\b\d{2,4}
 
 
 # Load the CSV file into a pandas DataFrame
-df = pd.read_csv(r'Original_Data\UCIdrug_train.csv')
+df = pd.read_csv(r'Original_Data\UCIdrug_test.csv')
 df_copy = df.copy()
 
 # Define the function to replace '&#039;' with an empty string
@@ -48,4 +48,4 @@ df['review'] = df['review'].apply(replace_space)
 
 
 # Display the first few rows of the data
-df.to_csv(r'Cleaned_Data\UCIdrug_train.csv', index=False)
+df.to_csv(r'Cleaned_Data\UCIdrug_test.csv', index=False)

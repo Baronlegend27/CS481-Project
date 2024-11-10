@@ -13,10 +13,8 @@ vector_copy = vector.copy()
 vectors_with_label1 = []
 x = 0
 start = time.time()
+
 for _, val in df1.iterrows():
-    x += 1
-    if x > 10000:
-        pass
     vectorz = vector_copy
     # Correcting the loop to use 'review' column for words
     seriez = pd.Series(val['review'].split()).value_counts()
