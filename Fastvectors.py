@@ -56,9 +56,9 @@ for y, test_val in enumerate(df2.itertuples(), 1):
         test_vector[key] = test_seriez[key]
 
     for x, val in enumerate(df1.itertuples(), 1):
-        if x % 100 == 0:
+        if x % 200 == 0:
             print(f"SUB Processed: {x}")
-        if x == 300:
+        if x == 1000:
             break
 
         vector_copy = vector.copy()
