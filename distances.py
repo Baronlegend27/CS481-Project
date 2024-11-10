@@ -1,7 +1,34 @@
+import time
+
 import numpy as np
 from collections import Counter
 import pandas as pd
 import pickle
+
+
+def most_common_number(lst):
+    if not lst:
+        return None  # Return None if the list is empty
+
+    # Dictionary to hold the frequency of each number
+    frequency = {}
+
+    # Count the frequency of each number in the list
+    for num in lst:
+        if num in frequency:
+            frequency[num] += 1
+        else:
+            frequency[num] = 1
+
+    # Find the maximum frequency
+    max_frequency = max(frequency.values())
+
+    # Collect all numbers with the maximum frequency
+    most_common = [num for num, count in frequency.items() if count == max_frequency]
+
+    # Return the smallest number among the most common
+    return min(most_common)
+
 
 
 def insert_and_trim(sorted_list, new_element):
@@ -63,20 +90,55 @@ data_point = vectorz
 
 most_similar = []
 x = 0
-for _, val in df1.iterrows():
-    vector_copy = vector.copy()
-    # Correcting the loop to use 'review' column for words
-    seriez = pd.Series(val['review'].split()).value_counts()
-    for key in seriez.index:
-        vector_copy[key] = seriez[key]
-    distance = euclidean_distance(data_point, vector_copy)
-    if len(most_similar) < 10:
-        most_similar.append((distance, vector_copy))
-    else:
-        most_similar = insert_and_trim(most_similar, (distance, vector_copy))
+y = 0
 
-print(len(most_similar))
-print(most_similar)
-first_values = [x[0] for x in most_similar]
-print(first_values)
+total_correct = 0
+total_incorrect = 0
+
+start = time.time()
+
+for _, test_val in df2.iterrows():
+    y += 1
+    print(f"Processed : {y}")
+    if y == 10:
+        break
+    test_vector = vector.copy()
+    test_seriez = pd.Series(test_val['review'].split()).value_counts()
+    test_tag = test_val["usefulCount"]
+    for key in test_seriez.index:
+        test_vector[key] = test_seriez[key]
+    for _, val in df1.iterrows():
+
+        x += 1
+        if x % 100 == 0:
+            print(f"SUB Processed : {x}")
+        if x == 300:
+            x = 0
+            break
+        vector_copy = vector.copy()
+        # Correcting the loop to use 'review' column for words
+        seriez = pd.Series(val['review'].split()).value_counts()
+        for key in seriez.index:
+            vector_copy[key] = seriez[key]
+        distance = euclidean_distance(test_vector, vector_copy)
+        if len(most_similar) < 5:
+            most_similar.append([distance, vector_copy, val["usefulCount"]])
+        else:
+            most_similar = insert_and_trim(most_similar, [distance, vector_copy, val["usefulCount"]])
+
+    last_val_list = [x[-1] for x in most_similar]
+    classifed_tag = most_common_number(last_val_list)
+    if classifed_tag == test_tag:
+        total_correct += 1
+    else:
+        total_incorrect += 1
+end = time.time()
+print(total_correct)
+print(total_incorrect)
+print(end-start)
+
+
+
+
+
 
