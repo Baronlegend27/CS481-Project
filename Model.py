@@ -3,28 +3,36 @@ import pickle
 import numpy as np
 import math
 
+import time
 df2 = pd.read_csv(r'Cleaned_Data\UCIdrug_test.csv', usecols=['usefulCount', 'review'])
-
-
-test1 = list(df2.iloc[0])
-
-test1_tokens = test1[0].split()
 
 with open('result.pkl', 'rb') as file:
     result = pickle.load(file)
+start_time = time.time()
+correct = 0
+wrong = 0
+total = 0
+for _, df_part in df2.iterrows():
+    total += 1
+    start_and_end = np.ones(len(result.index))
+    part = df_part.tolist()
+    tokens = part[0].split()
+    tag = part[1]
+    for token in tokens:
+        start_and_end *= result[token]
+    max_index = start_and_end.idxmax()
+    if max_index == tag:
+        correct += 1
+    else:
+        wrong += 1
+    if total > 1000:
+        break
+end_time = time.time()
 
-start_and_end = np.ones(len(result.index))
 
-for token in test1_tokens:
-    start_and_end *= result[token]
-
-print(start_and_end)
-max_index = start_and_end.idxmax()  # Returns the index of the largest value
-max_value = start_and_end.max()
-print(max_index)
-print(max_value)
-
-
+print(end_time-start_time)
+print(correct)
+print(wrong)
 
 
 
