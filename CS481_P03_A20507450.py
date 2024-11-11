@@ -393,9 +393,7 @@ if ALGO == 0:
         normalize = lambda a, b: (a / (a + b) if (a + b) != 0 else 0, b / (a + b) if (a + b) != 0 else 0)
         print(f"Sentence/document S: {sentence}")
         not_useful_prob, useful_prob = normalize(1/not_useful_val, 1/useful_val)
-        print("FUCKING PROBS")
-        print(f'not_useful_val = {not_useful_val}')
-        print(f'useful_val = {useful_val}')
+
         print(f'P(not_useful | S) = {not_useful_prob}')
         print(f'P(useful | S) = {useful_prob}')
 
