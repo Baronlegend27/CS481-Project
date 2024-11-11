@@ -25,13 +25,19 @@ tag_count = np.array(pd.read_csv(r'Cleaned_Data\UCIdrug_test.csv', usecols=['use
 with open('result.pkl', 'rb') as file:
     result = pickle.load(file)
 
+df1 = pd.read_csv(r'Cleaned_Data\UCIdrug_train.csv')
+df2 = pd.read_csv(r'Cleaned_Data\UCIdrug_test.csv')
+df = pd.concat([df1, df2], ignore_index=True)
 
 #print(len(result.index))
 
 
 empty_series = pd.Series(np.nan, index=result.index, dtype=float)
 
+counts = df['usefulCount'].value_counts()
+sorted_class_counts = counts.sort_index()
 
+sorted_list_count = list(sorted_class_counts)
 
 
 #print(empty_series)
@@ -50,10 +56,13 @@ log_class_probabilities = np.log(class_probabilities)
 all_classes = list(empty_series.index)
 
 
-mid = len(all_classes) // 2
+mid = round(len(sorted_list_count) / 25)
 
 not_useful = set(all_classes[:mid])
 useful = set(all_classes[mid:])
+
+
+
 #empty_series.sort_index(inplace=True)
 
 
@@ -70,9 +79,8 @@ fn = 0
 for _, df_part in df1.iterrows():
     total += 1
     start_and_end = log_class_probabilities.copy()
-    part = df_part.tolist()
-    tokens = part[0].split()
-    tag = part[1]
+    tokens = df_part["review"].split()
+    tag = df_part["usefulCount"]
     for token in tokens:
         start_and_end *= np.log(result[token])
     start_and_end = np.exp(start_and_end)
@@ -87,7 +95,7 @@ for _, df_part in df1.iterrows():
         fn += 1
     else:
         raise ValueError("FUCK")
-    if total > 10000:
+    if total > 1000:
         break
 
 end_time = time.time()

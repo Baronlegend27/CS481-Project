@@ -66,6 +66,7 @@ def clean_reviews(df):
     df['review'] = df['review'].apply(replace_commas)
     df['review'] = df['review'].apply(remove_period_and_quote)
     df['review'] = df['review'].apply(replace_space)
+
     return df
 
 # Clean both DataFrames
@@ -174,8 +175,13 @@ log_class_probabilities = np.log(class_probabilities)
 
 all_classes = list(empty_series.index)
 
+counts = df['usefulCount'].value_counts()
+sorted_class_counts = counts.sort_index()
 
-mid = len(all_classes) // 2
+sorted_list_count = list(sorted_class_counts)
+
+mid = round(len(sorted_list_count) / 25)
+
 
 not_useful = set(all_classes[:mid])
 useful = set(all_classes[mid:])
@@ -192,9 +198,8 @@ NBfn = 0
 for _, df_part in df1.iterrows():
     total += 1
     start_and_end = log_class_probabilities.copy()
-    part = df_part.tolist()
-    tokens = part[0].split()
-    tag = part[1]
+    tokens = df_part["review"].split()
+    tag = df_part["usefulCount"]
     for token in tokens:
         start_and_end *= np.log(result[token])
     start_and_end = np.exp(start_and_end)
@@ -209,9 +214,6 @@ for _, df_part in df1.iterrows():
         NBfn += 1
     else:
         raise ValueError("WRONG")
-
-
-
 
 
 
