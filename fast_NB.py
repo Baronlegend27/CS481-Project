@@ -1,86 +1,64 @@
 import pandas as pd
 import pickle
 import numpy as np
-import math
 import time
 
-
 def count_occurrences(lst):
-    count_dict = {}
-    for item in lst:
-        if item in count_dict:
-            count_dict[item] += 1
-        else:
-            count_dict[item] = 1
-    return count_dict
-
-
+    return np.unique(lst, return_counts=True)
 
 df1 = pd.read_csv(r'Cleaned_Data\UCIdrug_train.csv', usecols=['usefulCount', 'review'])
 
-array = pd.read_csv(r'Cleaned_Data\UCIdrug_train.csv', usecols=['usefulCount']).value_counts()
-
-tag_count = np.array(pd.read_csv(r'Cleaned_Data\UCIdrug_train.csv', usecols=['usefulCount']).sum())
+array = df1['usefulCount'].value_counts()
+tag_count = df1['usefulCount'].sum()
 
 with open('result.pkl', 'rb') as file:
     result = pickle.load(file)
 
-
-#print(len(result.index))
-
-
+# Initialize empty_series
 empty_series = pd.Series(np.nan, index=result.index, dtype=float)
 
 
-empty_series.loc[4] = 93
-
-#print(empty_series)
-for i in array.index:
-    i, = i
-    empty_series.loc[i] = int(array.loc[i])
-
+# Update empty_series based on array
+empty_series.update(array.astype(float))
 empty_series.fillna(0, inplace=True)
-empty_array = empty_series.to_numpy()
-empty_array = empty_array + 1
+
+# Calculate class probabilities
+empty_array = empty_series.to_numpy() + 1
 empty_array_sum = empty_array.sum()
 empty_array_length = len(empty_array)
 class_probabilities = empty_array / (empty_array_sum + empty_array_length)
 log_class_probabilities = np.log(class_probabilities)
-
-#empty_series.sort_index(inplace=True)
-
-
 
 start_time = time.time()
 correct = 0
 wrong = 0
 total = 0
 
+# Create a function to calculate the log probability product for tokens
+def log_prob_product(tokens, log_class_probabilities, result):
+    probabilities = log_class_probabilities.copy()
+    for token in tokens:
+        probabilities += np.log(result.get(token, 1))  # Default to log(1) if token not found
+    return probabilities
 
 for _, df_part in df1.iterrows():
     total += 1
-    start_and_end = log_class_probabilities.copy()
-    part = df_part.tolist()
-    tokens = part[0].split()
-    tag = part[1]
-    for token in tokens:
-        start_and_end *= np.log(result[token])
-    start_and_end = np.exp(start_and_end)
-    max_index = start_and_end.idxmax()
+    tokens = df_part['review'].split()
+    tag = df_part['usefulCount']
+
+    log_probs = log_prob_product(tokens, log_class_probabilities, result)
+    max_index = np.argmax(log_probs)
+
     if max_index == tag:
         correct += 1
     else:
         wrong += 1
+
     if total > 10000:
         break
+
 end_time = time.time()
 
-
-
-print(end_time-start_time)
-print(correct)
-print(wrong)
-
-
-
-
+print(f"Time taken: {end_time - start_time:.2f} seconds")
+print(f"Correct: {correct}")
+print(f"Wrong: {wrong}")

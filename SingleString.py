@@ -3,7 +3,6 @@ import pandas as pd
 from collections import Counter
 import pickle
 
-
 # Load data more efficiently by specifying needed columns
 df1 = pd.read_csv(r'Cleaned_Data\UCIdrug_train.csv', usecols=['usefulCount', 'review'])
 df2 = pd.read_csv(r'Cleaned_Data\UCIdrug_test.csv', usecols=['usefulCount', 'review'])

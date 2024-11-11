@@ -18,6 +18,9 @@ df2 = pd.read_csv(r'Cleaned_Data\UCIdrug_test.csv')
 
 df = pd.concat([df1, df2], ignore_index=True)
 
+
+
+
 # Apply the function to the 'review' column and join all text into a single string
 all_text = " ".join(df['review'])
 

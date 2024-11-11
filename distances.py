@@ -78,11 +78,6 @@ with open('vector.pkl', 'rb') as file:
 vector_copy = vector.copy()
 vectorz = vector_copy
 
-one_val = df2.iloc[0]
-one_tag = df2.iloc[1]
-seriez = pd.Series(one_val['review'].split()).value_counts()
-for key in seriez.index:
-    vectorz[key] = seriez[key]
 
 data_point = vectorz
 
@@ -132,13 +127,12 @@ for _, test_val in df2.iterrows():
         total_correct += 1
     else:
         total_incorrect += 1
+
+
 end = time.time()
 print(total_correct)
 print(total_incorrect)
 print(end-start)
-
-
-
 
 
 
