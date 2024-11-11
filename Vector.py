@@ -18,6 +18,9 @@ df2 = pd.read_csv(r'Cleaned_Data\UCIdrug_test.csv')
 
 df = pd.concat([df1, df2], ignore_index=True)
 
+
+
+
 # Apply the function to the 'review' column and join all text into a single string
 all_text = " ".join(df['review'])
 
@@ -67,6 +70,7 @@ def get_all_words():
         data = pickle.load(file)
     return data.split()
 
+
 def filter_non_alpha_words(words):
     return [word for word in words if not word.isalpha()]
 
@@ -76,12 +80,13 @@ if "__main__" == __name__:
     all_text = all_text.lower()
     words = all_text.split()
 
-
     vocab = list(set(words))
     non_alpha_vocab = filter_non_alpha_words(vocab)
     print(non_alpha_vocab)
     print(f'non_alpha vocab {len(non_alpha_vocab)}')
     print(f'total vocab {len(vocab)}')
+
+    vocab = list(set(words))
 
     vector = dict.fromkeys(vocab, 0)
 

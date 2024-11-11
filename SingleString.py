@@ -3,7 +3,6 @@ import pandas as pd
 from collections import Counter
 import pickle
 
-
 # Load data more efficiently by specifying needed columns
 df1 = pd.read_csv(r'Cleaned_Data\UCIdrug_train.csv', usecols=['usefulCount', 'review'])
 df2 = pd.read_csv(r'Cleaned_Data\UCIdrug_test.csv', usecols=['usefulCount', 'review'])
@@ -53,12 +52,8 @@ numerator_frame = numerator_frame + 1
 denominator_frame = denominator_frame + len(set(vocab))
 
 
-# Save the objects into a pickle file
-with open('fraction.pkl', 'wb') as file:
-    pickle.dump([numerator_frame, denominator_frame], file)
+result = numerator_frame/denominator_frame
 
 
-
-
-
-
+with open('result.pkl', 'wb') as file:
+    pickle.dump(result, file)
