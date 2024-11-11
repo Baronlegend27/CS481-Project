@@ -40,12 +40,9 @@ space_prior_after = lambda text: re.sub(r'([a-zA-Z])(\d)|(\d)([a-zA-Z])',
 remove_url_encoded = lambda text: re.sub(r'%[0-9A-Fa-f]{2}|%u[0-9A-Fa-f]{4}', '', urllib.parse.unquote(text))
 decode_html_entities = lambda text: html.unescape(text)
 remove_slash = lambda s: s.replace('/', ' ')
-replace_puncuation = lambda s: s.replace('!', ' !').replace('?', ' ?')
 replace_space = lambda s: s.replace('  ', ' ')
 replace_commas = lambda s: s.replace(',', ' ')
-replace_parenthesis = lambda s: s.replace('(', ' ').replace(')', ' ').replace('{', ' ').replace('}', ' ').replace('[',
-                                                                                                                  ' ').replace(
-    ']', ' ')
+replace_parenthesis = lambda s: s.replace('(', ' ').replace(')', ' ').replace('{', ' ').replace('}', ' ').replace('[',' ').replace(']', ' ').replace("<", " ").replace(">", " ")
 remove_tabs = lambda s: s.replace('\t', ' ')
 remove_newlines = lambda s: s.replace('\n', ' ')
 remove_rlines = lambda s: s.replace('\r', '')
@@ -236,18 +233,21 @@ denominator_frame = denominator_frame + len(set(vocab))
 result = numerator_frame / denominator_frame
 
 # Prepare the data for testing and training
-array = test_df["usefulCount"].value_counts()
-tag_count = test_df['usefulCount'].sum()
+array = train_df["usefulCount"].value_counts()
+tag_count = train_df['usefulCount'].sum()
 
-empty_series = pd.Series(np.nan, index=result.index, dtype=float)
+empty_series = pd.Series(np.nan, index=array.index, dtype=float)
 for i in array.index:
     empty_series.loc[i] = int(array.loc[i])
+
 empty_series.fillna(0, inplace=True)
-empty_array = empty_series.to_numpy()
-empty_array = empty_array + 1
-empty_array_sum = empty_array.sum()
-empty_array_length = len(empty_array)
-class_probabilities = empty_array / (empty_array_sum + empty_array_length)
+
+class_instances = empty_series + 1
+class_instances.sort_index(inplace=True)
+empty_array_sum = class_instances.sum()
+empty_array_length = len(class_instances)
+
+class_probabilities = class_instances / empty_array_sum
 log_class_probabilities = np.log(class_probabilities)
 
 all_classes = list(empty_series.index)
@@ -257,10 +257,13 @@ sorted_class_counts = counts.sort_index()
 
 sorted_list_count = list(sorted_class_counts)
 
+
 mid = round(len(sorted_list_count) / 25)
 
 not_useful = set(all_classes[:mid])
+
 useful = set(all_classes[mid:])
+
 
 
 start_BN_time = time.time()
@@ -277,6 +280,10 @@ if ALGO == 0:
 
     for _, df_part in test_df.iterrows():
         total += 1
+        if total > 5000:
+            break
+        if total % 1000 == 0:
+            print(f"Process up to {total}")
         start_and_end = log_class_probabilities.copy()
         tokens = df_part["review"].split()
         tag = df_part["usefulCount"]
@@ -284,18 +291,16 @@ if ALGO == 0:
             start_and_end += np.log(result[token])
         start_and_end = np.exp(start_and_end)
         max_index = start_and_end.idxmax()
-        if (max_index in useful and tag in useful):
+        if (max_index > 15 and tag > 15):
             NBtp += 1
-        elif (max_index in not_useful and tag in not_useful):
+        elif (max_index <= 15 and tag <= 15):
             NBtn += 1
-        elif (max_index in useful and tag in not_useful):
+        elif (max_index > 15 and tag <= 15):
             NBfp += 1
-        elif (max_index in not_useful and tag in useful):
+        elif (max_index <= 15 and tag > 15):
             NBfn += 1
         else:
             raise ValueError("WRONG")
-        if total > 100:
-            break
 
     print(f'True Postive {NBtp}')
     print(f'True Negative {NBtn}')
@@ -349,7 +354,7 @@ if ALGO == 0:
     end_BN_time = time.time()
     print(f'NB time {end_BN_time-start_BN_time}')
 
-    while True:
+    """while True:
         sentence = input("Enter your sentence/document: ")
 
         # Preprocess the sentence (same as training data)
@@ -408,7 +413,7 @@ if ALGO == 0:
         again = input("Do you want to enter another sentence [Y/N]? ")
         if again.upper() != 'Y':
             break
-
+"""
 
 
 elif ALGO == 1:
@@ -428,8 +433,7 @@ elif ALGO == 1:
         most_similar = []
         y += 1
         print(f"Processed : {y}")
-        if y >= 5:
-            break
+
         test_vector = vector.copy()
         test_seriez = pd.Series(test_val['review'].split()).value_counts()
         test_tag = test_val["usefulCount"]
@@ -439,9 +443,8 @@ elif ALGO == 1:
             x += 1
             if x % 100 == 0:
                 print(f"SUB Processed : {x}")
-            if x >= 300:
+            if x == len(train_df):
                 x = 0
-                break
             vector_copy = vector.copy()
             # Correcting the loop to use 'review' column for words
             seriez = pd.Series(val['review'].split()).value_counts()
