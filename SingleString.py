@@ -53,7 +53,7 @@ numerator_frame = numerator_frame + 1
 denominator_frame = denominator_frame + len(set(vocab))
 
 
-result = numerator_frame/ denominator_frame
+result = numerator_frame/denominator_frame
 
 
 with open('result.pkl', 'wb') as file:
