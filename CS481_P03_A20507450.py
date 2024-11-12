@@ -114,6 +114,22 @@ def euclidean_distance(dict1, dict2):
 
     return distance
 
+
+
+def euclidean_distance_array(arr1, arr2):
+    # Ensure the arrays are NumPy arrays (just in case they are lists)
+    arr1 = np.array(arr1)
+    arr2 = np.array(arr2)
+
+    # Check if the arrays are of the same length
+    if arr1.shape != arr2.shape:
+        raise ValueError("Arrays must have the same dimensions")
+
+    # Compute the Euclidean distance
+    distance = np.sqrt(np.sum((arr1 - arr2) ** 2))
+    return distance
+
+
 def insert_and_trim(sorted_list, new_element):
     # Sort the list by the first element of each tuple
     sorted_list.append(new_element)  # Temporarily add the new tuple
@@ -436,6 +452,10 @@ if ALGO == 0:
 elif ALGO == 1:
     start_KNN_time = time.time()
     # K-Nearest Neighbors Algorithm
+
+    train_vector_list = []
+    train_label_list = []
+
     print("Running KNN...")
     # (Insert your KNN code here, as it was in the original code)
     # Example: Use train_df to train the model and test_df to evaluate
@@ -445,13 +465,24 @@ elif ALGO == 1:
     KNNfp = 0
     KNNtn = 0
     KNNfn = 0
+    words = vector.keys()
+    train_df = train_df[["review", "usefulCount"]]
+    def string_to_array(string):
+        test_vector = vector.copy()
+        test_seriez = pd.Series(string.split()).value_counts()
+        for key in test_seriez.index:
+            test_vector[key] = test_seriez[key]
+        return np.array(test_vector.values)
+    train_df["array"] = train_df["review"].apply(string_to_array)
+    print("Train DF")
+    print(train_df)
+    print(train_df.head())
+
 
     for _, test_val in test_df.iterrows():
         most_similar = []
         y += 1
         print(f"Processed : {y}")
-        if y > 2:
-            break
         test_vector = vector.copy()
         test_seriez = pd.Series(test_val['review'].split()).value_counts()
         test_tag = test_val["usefulCount"]
@@ -461,13 +492,15 @@ elif ALGO == 1:
             x += 1
             if x % 100 == 0:
                 print(f"SUB Processed : {x}")
-            if x == len(train_df):
+            if x == 200:
                 x = 0
+                break
             vector_copy = vector.copy()
             # Correcting the loop to use 'review' column for words
             seriez = pd.Series(val['review'].split()).value_counts()
             for key in seriez.index:
                 vector_copy[key] = seriez[key]
+
             distance = euclidean_distance(test_vector, vector_copy)
             if len(most_similar) < 5:
                 most_similar.append([distance, vector_copy, val["usefulCount"]])
@@ -477,16 +510,21 @@ elif ALGO == 1:
         last_val_list = [x[-1] for x in most_similar]
         classifed_tag = most_common_number(last_val_list)
 
-        if (classifed_tag in useful and test_tag in useful):
+        if (classifed_tag > 15 and test_tag > 15):
             KNNtp += 1
-        elif (classifed_tag in not_useful and test_tag in not_useful):
+        elif (classifed_tag <= 15 and test_tag <= 15):
             KNNtn += 1
-        elif (classifed_tag in useful and test_tag in not_useful):
+        elif (classifed_tag > 15 and test_tag <= 15):
             KNNfp += 1
-        elif (classifed_tag in not_useful and test_tag in useful):
+        elif (classifed_tag <= 15 and test_tag > 15):
             KNNfn += 1
         else:
             raise ValueError("WRONG")
+
+    print(f'True Positive: {KNNtp}')
+    print(f'True Negative: {KNNtn}')
+    print(f'False Positive: {KNNfp}')
+    print(f'False Negative: {KNNfn}')
 
     print(f'True Postive {KNNtp}')
     print(f'True Negative {KNNtn}')
