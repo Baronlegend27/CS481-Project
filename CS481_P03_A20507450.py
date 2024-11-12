@@ -49,7 +49,7 @@ remove_rlines = lambda s: s.replace('\r', '')
 remove_period_and_quote = lambda s: s.replace('.', '').replace('"', '').replace(";", "").replace("'", "").replace(",",
                                                                                                                   "").replace(
     "(", "").replace(")", "").replace(":", " ").replace("~", " ").replace("*", " ")
-remove_line_space = lambda s: s.replace('-', ' ')
+remove_line_space = lambda s: s.replace('-', ' ').replace('<', ' ').replace('>', ' ')
 make_smaller = lambda x: x.lower()
 fix_punctuation = lambda x: x.replace("!", " ! ").replace("?", " ? ")
 # Lambda to replace all non-alphanumeric characters and digits with spaces
@@ -178,6 +178,7 @@ def clean_reviews(df):
     df['review'] = df['review'].apply(remove_line_space)
     df['review'] = df['review'].apply(replace_commas)
     df['review'] = df['review'].apply(remove_period_and_quote)
+    df['review'] = df['review'].apply(convert_to_spaces)
     df['review'] = df['review'].apply(replace_space)
     df['review'] = df['review'].apply(replace_space)
 
@@ -229,61 +230,60 @@ for key in nums:
 text_for_classes = nums
 
 # Create DataFrame
-numerator_frame = pd.DataFrame(columns=list(vocab), index=nums.keys())
-numerator_frame = numerator_frame.fillna(0)
-
-# Optimize word counting using Counter
-
-for key in text_for_classes.keys():
-    # Use Counter for efficient word counting
-    word_counts = Counter(text_for_classes[key])
-
-    # Update DataFrame in bulk
-    numerator_frame.loc[key, list(word_counts.keys())] = list(word_counts.values())
-
-denominator_frame = pd.Series(words).value_counts()
-
-numerator_frame = numerator_frame + 1
-denominator_frame = denominator_frame + len(set(vocab))
-
-result = numerator_frame / denominator_frame
-
-# Prepare the data for testing and training
-array = train_df["usefulCount"].value_counts()
-tag_count = train_df['usefulCount'].sum()
-
-empty_series = pd.Series(np.nan, index=array.index, dtype=float)
-for i in array.index:
-    empty_series.loc[i] = int(array.loc[i])
-
-empty_series.fillna(0, inplace=True)
-
-class_instances = empty_series + 1
-class_instances.sort_index(inplace=True)
-empty_array_sum = class_instances.sum()
-empty_array_length = len(class_instances)
-
-class_probabilities = class_instances / empty_array_sum
-log_class_probabilities = np.log(class_probabilities)
-
-all_classes = list(empty_series.index)
-
-counts = df['usefulCount'].value_counts()
-sorted_class_counts = counts.sort_index()
-
-sorted_list_count = list(sorted_class_counts)
-
-
-mid = round(len(sorted_list_count) / 25)
-
-not_useful = set(all_classes[:mid])
-
-useful = set(all_classes[mid:])
-
 
 
 start_BN_time = time.time()
 if ALGO == 0:
+    numerator_frame = pd.DataFrame(columns=list(vocab), index=nums.keys())
+    numerator_frame = numerator_frame.fillna(0)
+
+    # Optimize word counting using Counter
+
+    for key in text_for_classes.keys():
+        # Use Counter for efficient word counting
+        word_counts = Counter(text_for_classes[key])
+
+        # Update DataFrame in bulk
+        numerator_frame.loc[key, list(word_counts.keys())] = list(word_counts.values())
+
+    denominator_frame = pd.Series(words).value_counts()
+
+    numerator_frame = numerator_frame + 1
+    denominator_frame = denominator_frame + len(set(vocab))
+
+    result = numerator_frame / denominator_frame
+
+    # Prepare the data for testing and training
+    array = train_df["usefulCount"].value_counts()
+    tag_count = train_df['usefulCount'].sum()
+
+    empty_series = pd.Series(np.nan, index=array.index, dtype=float)
+    for i in array.index:
+        empty_series.loc[i] = int(array.loc[i])
+
+    empty_series.fillna(0, inplace=True)
+
+    class_instances = empty_series + 1
+    class_instances.sort_index(inplace=True)
+    empty_array_sum = class_instances.sum()
+    empty_array_length = len(class_instances)
+
+    class_probabilities = class_instances / empty_array_sum
+    log_class_probabilities = np.log(class_probabilities)
+
+    all_classes = list(empty_series.index)
+
+    counts = df['usefulCount'].value_counts()
+    sorted_class_counts = counts.sort_index()
+
+    sorted_list_count = list(sorted_class_counts)
+
+    mid = round(len(sorted_list_count) / 25)
+
+    not_useful = set(all_classes[:mid])
+
+    useful = set(all_classes[mid:])
+
     # Naive Bayes Algorithm
     print("Running Naive Bayes...")
     # (Insert your Naive Bayes code here, as it was in the original code)
@@ -451,6 +451,7 @@ if ALGO == 0:
 
 elif ALGO == 1:
     start_KNN_time = time.time()
+
     # K-Nearest Neighbors Algorithm
 
     train_vector_list = []
@@ -459,72 +460,92 @@ elif ALGO == 1:
     print("Running KNN...")
     # (Insert your KNN code here, as it was in the original code)
     # Example: Use train_df to train the model and test_df to evaluate
-    y = 0
-    x = 0
+
     KNNtp = 0
     KNNfp = 0
     KNNtn = 0
     KNNfn = 0
     words = vector.keys()
     train_df = train_df[["review", "usefulCount"]]
+    train_file = "train_data.csv"
+    test_file = "test_data.csv"
+    train_vector = "train_vector.csv"
+    test_vector = "test_vector.csv"
+
+    train_df.to_csv(train_file, index=False)
+    test_df.to_csv(test_file, index=False)
+
+    chunk_size = 1500
     def string_to_array(string):
         test_vector = vector.copy()
         test_seriez = pd.Series(string.split()).value_counts()
         for key in test_seriez.index:
             test_vector[key] = test_seriez[key]
-        return np.array(test_vector.values)
-    train_df["array"] = train_df["review"].apply(string_to_array)
-    print("Train DF")
-    print(train_df)
-    print(train_df.head())
+        return np.array(test_vector.values())
+
+    chunk_iter = pd.read_csv(train_file, chunksize=chunk_size)
+
+    for chunk in chunk_iter:
+
+        chunk['array'] = chunk['review'].apply(string_to_array)
+
+        chunk = chunk[['usefulCount', 'array']]
+
+        chunk.to_csv(train_vector, mode='a', header=False, index=False)
 
 
-    for _, test_val in test_df.iterrows():
-        most_similar = []
-        y += 1
-        print(f"Processed : {y}")
-        test_vector = vector.copy()
-        test_seriez = pd.Series(test_val['review'].split()).value_counts()
-        test_tag = test_val["usefulCount"]
-        for key in test_seriez.index:
-            test_vector[key] = test_seriez[key]
-        for _, val in train_df.iterrows():
-            x += 1
-            if x % 100 == 0:
-                print(f"SUB Processed : {x}")
-            if x == 200:
-                x = 0
-                break
-            vector_copy = vector.copy()
-            # Correcting the loop to use 'review' column for words
-            seriez = pd.Series(val['review'].split()).value_counts()
-            for key in seriez.index:
-                vector_copy[key] = seriez[key]
+    chunk_iter = pd.read_csv(test_file, chunksize=chunk_size)
 
-            distance = euclidean_distance(test_vector, vector_copy)
-            if len(most_similar) < 5:
-                most_similar.append([distance, vector_copy, val["usefulCount"]])
-            else:
-                most_similar = insert_and_trim(most_similar, [distance, vector_copy, val["usefulCount"]])
+    for chunk in chunk_iter:
+        chunk['array'] = chunk['review'].apply(string_to_array)
 
-        last_val_list = [x[-1] for x in most_similar]
-        classifed_tag = most_common_number(last_val_list)
+        chunk = chunk[['usefulCount', 'array']]
 
-        if (classifed_tag > 15 and test_tag > 15):
-            KNNtp += 1
-        elif (classifed_tag <= 15 and test_tag <= 15):
-            KNNtn += 1
-        elif (classifed_tag > 15 and test_tag <= 15):
-            KNNfp += 1
-        elif (classifed_tag <= 15 and test_tag > 15):
-            KNNfn += 1
-        else:
-            raise ValueError("WRONG")
+        chunk.to_csv(test_vector, mode='a', header=False, index=False)
 
-    print(f'True Positive: {KNNtp}')
-    print(f'True Negative: {KNNtn}')
-    print(f'False Positive: {KNNfp}')
-    print(f'False Negative: {KNNfn}')
+    print("Data saved to CSV in chunks.")
+
+    test_vector_chunks = pd.read_csv(test_vector, chunksize=chunk_size)
+    train_vector_chunks = pd.read_csv(train_vector, chunksize=chunk_size)
+
+    closest = pd.DataFrame()
+    # calculate
+    for tvc in test_vector_chunks:
+
+        for _, test_frame in tvc:
+            test_tag = test_frame['usefulCount']
+            if len(closest) > 1:
+                predicted = most_common_number(closest["usefulCount"])
+
+                if (predicted > 15 and test_tag > 15):
+                    KNNtp += 1
+                elif (predicted <= 15 and test_tag <= 15):
+                    KNNtn += 1
+                elif (predicted > 15 and test_tag <= 15):
+                    KNNfp += 1
+                elif (predicted <= 15 and test_tag > 15):
+                    KNNfn += 1
+                else:
+                    raise ValueError("WRONG")
+
+            test_array = test_frame.loc["array"]
+            test_tag = test_frame.loc["usefulCount"]
+
+            for trc in train_vector_chunks:
+
+                for _, train_df in trc:
+
+                    train_df["distances"] = train_df["array"].apply(lambda x: euclidean_distance_array(x, test_array))
+
+                    sorted_train = train_df.sortby(by="distances", ascending=False)
+
+                    top_three = sorted_train.head(3)
+
+                    closest = pd.concat([closest, top_three], axis=0, ignore_index=True)
+
+                    closest = closest.sort_values(by="distances", ascending=False)
+
+                    closest = closest.head(3)
 
     print(f'True Postive {KNNtp}')
     print(f'True Negative {KNNtn}')
@@ -582,8 +603,4 @@ end_time = time.time()
 profiler.disable()
 # You can now proceed to implement both models as per the provided logic.
 print(f'Total time:{end_time-start_time}')
-# You can now proceed to implement both models as per the provided logic.
-stats = pstats.Stats(profiler)
-stats.strip_dirs()
-stats.sort_stats(pstats.SortKey.CUMULATIVE)
-#stats.print_stats()
+
