@@ -278,34 +278,51 @@ if ALGO == 0:
     NBtn = 0
     NBfn = 0
 
-    for _, df_part in test_df.iterrows():
-        total += 1
-        if total > 5000:
-            break
-        if total % 1000 == 0:
-            print(f"Process up to {total}")
-        start_and_end = log_class_probabilities.copy()
-        tokens = df_part["review"].split()
-        tag = df_part["usefulCount"]
-        for token in tokens:
-            start_and_end += np.log(result[token])
-        start_and_end = np.exp(start_and_end)
-        max_index = start_and_end.idxmax()
-        if (max_index > 15 and tag > 15):
-            NBtp += 1
-        elif (max_index <= 15 and tag <= 15):
-            NBtn += 1
-        elif (max_index > 15 and tag <= 15):
-            NBfp += 1
-        elif (max_index <= 15 and tag > 15):
-            NBfn += 1
-        else:
-            raise ValueError("WRONG")
+    # Ensure 'result' is a DataFrame if it's not already
+    result_df = pd.DataFrame(result)
 
-    print(f'True Postive {NBtp}')
-    print(f'True Negative {NBtn}')
-    print(f'False Negative {NBfn}')
-    print(f'False Positive {NBfp}')
+    # Create a copy of log_class_probabilities to use in vectorized operations
+    log_class_probabilities_copy = log_class_probabilities.copy()
+
+    # Process up to 10000 rows
+    subset_test_df = test_df
+
+    # Tokenize reviews
+    subset_test_df.loc[:, 'tokens'] = subset_test_df['review'].str.split()
+
+    # Flatten the list of tokens and get the unique tokens present in the subset
+    unique_tokens = list(set([token for sublist in subset_test_df['tokens'] for token in sublist]))
+
+    # Initialize start_and_end array
+    start_and_end = np.tile(log_class_probabilities_copy.values, (len(subset_test_df), 1))
+
+    # Update start_and_end with log probabilities
+    for token in unique_tokens:
+        if token in result_df.index:
+            token_indices = [i for i, tokens in enumerate(subset_test_df['tokens']) if token in tokens]
+            start_and_end[token_indices, :] += np.log(result_df.loc[token].values)
+
+    # Convert log probabilities back to probabilities
+    start_and_end = np.exp(start_and_end)
+
+    # Determine predicted classes
+    predicted_classes = np.argmax(start_and_end, axis=1)
+
+    # Threshold for useful vs not useful
+    threshold = 15
+
+    # Calculate metrics
+    actual_classes = subset_test_df['usefulCount'].values
+    NBtp = np.sum((predicted_classes > threshold) & (actual_classes > threshold))
+    NBtn = np.sum((predicted_classes <= threshold) & (actual_classes <= threshold))
+    NBfp = np.sum((predicted_classes > threshold) & (actual_classes <= threshold))
+    NBfn = np.sum((predicted_classes <= threshold) & (actual_classes > threshold))
+
+    print(f'True Positive: {NBtp}')
+    print(f'True Negative: {NBtn}')
+    print(f'False Positive: {NBfp}')
+    print(f'False Negative: {NBfn}')
+
 
     # 1. Sensitivity (Recall)
     if (NBtp + NBfn) != 0:
@@ -433,7 +450,8 @@ elif ALGO == 1:
         most_similar = []
         y += 1
         print(f"Processed : {y}")
-
+        if y > 2:
+            break
         test_vector = vector.copy()
         test_seriez = pd.Series(test_val['review'].split()).value_counts()
         test_tag = test_val["usefulCount"]
