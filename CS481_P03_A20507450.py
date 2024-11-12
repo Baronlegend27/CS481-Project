@@ -475,36 +475,43 @@ elif ALGO == 1:
     train_df.to_csv(train_file, index=False)
     test_df.to_csv(test_file, index=False)
 
-    chunk_size = 1500
+    chunk_size = 5_000
     def string_to_array(string):
         test_vector = vector.copy()
         test_seriez = pd.Series(string.split()).value_counts()
         for key in test_seriez.index:
             test_vector[key] = test_seriez[key]
-        return np.array(test_vector.values())
+        return list(test_vector.values())
 
-    chunk_iter = pd.read_csv(train_file, chunksize=chunk_size)
-
-    for chunk in chunk_iter:
-
+    train_chunk_iter = pd.read_csv(train_file, chunksize=chunk_size)
+    fuck = 0
+    for chunk in train_chunk_iter:
+        fuck += 1
+        if fuck > 2:
+            break
         chunk['array'] = chunk['review'].apply(string_to_array)
+
 
         chunk = chunk[['usefulCount', 'array']]
 
         chunk.to_csv(train_vector, mode='a', header=False, index=False)
 
 
-    chunk_iter = pd.read_csv(test_file, chunksize=chunk_size)
+    test_chunk_iter = pd.read_csv(test_file, chunksize=chunk_size)
 
-    for chunk in chunk_iter:
+    for chunk in test_chunk_iter:
+        fuck += 1
+        if fuck > 4:
+            break
         chunk['array'] = chunk['review'].apply(string_to_array)
 
         chunk = chunk[['usefulCount', 'array']]
 
         chunk.to_csv(test_vector, mode='a', header=False, index=False)
-
+    end_chunck_time = time.time()
     print("Data saved to CSV in chunks.")
-
+    print(f'Time to chunk:{end_chunck_time-start_time}')
+    time.sleep(15)
     test_vector_chunks = pd.read_csv(test_vector, chunksize=chunk_size)
     train_vector_chunks = pd.read_csv(train_vector, chunksize=chunk_size)
 
